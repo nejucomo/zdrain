@@ -10,6 +10,7 @@ from decimal import Decimal
 
 
 MINCONF = 6
+FEE = Decimal('0.0001')
 
 
 def main(args=sys.argv[1:]):
@@ -23,7 +24,12 @@ def main(args=sys.argv[1:]):
     cli = ZcashCli(opts.DATADIR)
     balances = cli.get_balances()
     for (src, dst) in mapping.iteritems():
-        cli.z_sendmany_blocking(src, dst, balances[src])
+        amount = balances[src]
+        amount -= FEE
+        if amount > Decimal(0):
+            cli.z_sendmany_blocking(src, dst, amount)
+        else:
+            print 'Balance of {} is 0.'.format(src)
 
 
 def parse_args(args):
