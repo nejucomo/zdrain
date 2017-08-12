@@ -62,8 +62,7 @@ class ZcashCli (object):
         opid = self._call_rpc(
             'z_sendmany',
             src,
-            [{"address": dst, "amount": amount}],
-            verbose=True)
+            [{"address": dst, "amount": amount}])
 
         statinfo = self._wait_for_op_status(opid)
         if statinfo['status'] != 'success':
