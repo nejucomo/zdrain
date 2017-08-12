@@ -14,6 +14,10 @@ setup(
     license='GPLv3',
     url='https://github.com/nejucomo/{}'.format(PACKAGE),
 
+    install_requires=[
+        'simplejson >= 3.11.1',
+    ],
+
     packages=find_packages(),
 
     entry_points={
