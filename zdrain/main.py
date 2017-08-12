@@ -23,6 +23,10 @@ def main(args=sys.argv[1:]):
 
     cli = ZcashCli(opts.DATADIR)
     balances = cli.get_balances()
+
+    print 'Balances: {}'.format(
+        simplejson.dumps(balances, indent=2, sort_keys=True))
+
     for (src, dst) in mapping.iteritems():
         amount = balances[src]
         amount -= FEE
@@ -57,7 +61,7 @@ class ZcashCli (object):
         opid = self._call_rpc(
             'z_sendmany',
             src,
-            {"address": dst, "amount": amount},
+            [{"address": dst, "amount": amount}],
             verbose=True)
 
         statinfo = self._wait_for_op_status(opid)
