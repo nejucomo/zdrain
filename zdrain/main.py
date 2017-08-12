@@ -24,7 +24,7 @@ def main(args=sys.argv[1:]):
     cli = ZcashCli(opts.DATADIR, verbose=True)
     balances = cli.get_balances()
 
-    print 'Balances: {}'.format(
+    print 'Starting balances: {}'.format(
         simplejson.dumps(balances, indent=2, sort_keys=True))
 
     for (src, dst) in mapping.iteritems():
@@ -34,6 +34,9 @@ def main(args=sys.argv[1:]):
             cli.z_sendmany_blocking(src, dst, amount)
         else:
             print 'Balance of {} is 0.'.format(src)
+
+    print 'Ending balances: {}'.format(
+        simplejson.dumps(balances, indent=2, sort_keys=True))
 
 
 def parse_args(args):
@@ -62,7 +65,8 @@ class ZcashCli (object):
         opid = self._call_rpc(
             'z_sendmany',
             src,
-            [{"address": dst, "amount": amount}])
+            [{"address": dst, "amount": amount}]
+        ).strip()
 
         statinfo = self._wait_for_op_status(opid)
         if statinfo['status'] != 'success':
@@ -84,7 +88,7 @@ class ZcashCli (object):
         while statinfo['status'] == 'executing':
             time.sleep(13)
             [statinfo] = self._call_rpc_json('z_getoperationstatus', [opid])
-        [statinfo] = self._call_rpc_json('z_getoperationresult', [opid])[0]
+        [statinfo] = self._call_rpc_json('z_getoperationresult', [opid])
         return statinfo
 
     def _wait_for_confirmation(self, txid):
