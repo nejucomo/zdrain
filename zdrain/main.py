@@ -80,11 +80,12 @@ class ZcashCli (object):
         return balances
 
     def _wait_for_op_status(self, opid):
-        statinfo = self._call_rpc_json('z_getoperationstatus', [opid])
+        [statinfo] = self._call_rpc_json('z_getoperationstatus', [opid])
         while statinfo['status'] == 'executing':
             time.sleep(13)
-            statinfo = self._call_rpc_json('z_getoperationstatus', [opid])
-        return self._call_rpc_json('z_getoperationresult', [opid])
+            [statinfo] = self._call_rpc_json('z_getoperationstatus', [opid])
+        [statinfo] = self._call_rpc_json('z_getoperationresult', [opid])[0]
+        return statinfo
 
     def _wait_for_confirmation(self, txid):
         txinfo = self._call_rpc_json('gettransaction', txid)
