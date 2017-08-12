@@ -104,7 +104,8 @@ class ZcashCli (object):
     def _get_zaddr_balances(self, balances):
         for zaddr in self._call_rpc_json('z_listaddresses'):
             amount = self._call_rpc_json('z_getbalance', zaddr)
-            balances.add_to(zaddr, amount)
+            if amount > Decimal(0):
+                balances.add_to(zaddr, amount)
 
     def _call_rpc(self, *args):
         def encode_arg(a):
