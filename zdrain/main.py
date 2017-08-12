@@ -89,7 +89,7 @@ class ZcashCli (object):
             txinfo = self._call_rpc_json('gettransaction', txid)
 
     def _get_taddr_balances(self, balances):
-        for entry in self._call_rpc_json('listunspent', '1', '9' * 10):
+        for entry in self._call_rpc_json('listunspent', '1', '9' * 8):
             if entry['spendable']:
                 taddr = entry['address']
                 amount = entry['amount']
@@ -129,7 +129,7 @@ class ZcashCli (object):
 
 
 class AccumulatorDict (dict):
-    def __get__(self, key):
+    def __getitem__(self, key):
         return self.get(key, Decimal(0))
 
     def add_to(self, key, amount):
