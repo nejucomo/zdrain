@@ -113,7 +113,7 @@ class ZcashCli (object):
 
         args = (
             [
-                'zcash',
+                'zcash-cli',
                 '-datadir=' + self._datadir,
             ] + [
                 encode_arg(arg)
