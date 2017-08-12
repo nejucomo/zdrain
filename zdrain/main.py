@@ -1,6 +1,8 @@
 #!/usr/bin/env python
 
+import os
 import sys
+import time
 import argparse
 import subprocess
 import simplejson
@@ -30,7 +32,6 @@ def parse_args(args):
     p.add_argument(
         '--datadir',
         dest='DATADIR',
-        help='Zcash datadir.',
         default=os.path.expanduser('~/.zcash'),
         help='Zcash datadir.')
 
@@ -57,6 +58,8 @@ class ZcashCli (object):
         if statinfo['status'] != 'success':
             raise Exception(simplejson.dumps(statinfo))
 
+        txid = statinfo['result']['txid']
+
         self._wait_for_confirmation(txid)
         print 'Confirmed: {}'.format(txid)
 
@@ -67,15 +70,11 @@ class ZcashCli (object):
         return balances
 
     def _wait_for_op_status(self, opid):
-        statinfo = self._call_rpc_json(
-            'z_getoperationstatus',
-            [opid])
+        statinfo = self._call_rpc_json('z_getoperationstatus', [opid])
         while statinfo['status'] == 'executing':
             time.sleep(13)
-            statinfo = self._call_rpc_json(
-                'z_getoperationstatus',
-                [opid])
-        return statinfo
+            statinfo = self._call_rpc_json('z_getoperationstatus', [opid])
+        return self._call_rpc_json('z_getoperationresult', [opid])
 
     def _wait_for_confirmation(self, txid):
         txinfo = self._call_rpc_json('gettransaction', txid)
