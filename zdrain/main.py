@@ -21,7 +21,7 @@ def main(args=sys.argv[1:]):
     with file(opts.MAPJSON) as f:
         mapping = simplejson.load(f, use_decimal=True)
 
-    cli = ZcashCli(opts.DATADIR)
+    cli = ZcashCli(opts.DATADIR, verbose=True)
     balances = cli.get_balances()
 
     print 'Balances: {}'.format(
@@ -53,8 +53,9 @@ def parse_args(args):
 
 
 class ZcashCli (object):
-    def __init__(self, datadir):
+    def __init__(self, datadir, verbose):
         self._datadir = datadir
+        self._verbose = verbose
 
     def z_sendmany_blocking(self, src, dst, amount):
         print 'Sending from {} to {}: {} ZEC'.format(src, dst, amount)
@@ -106,10 +107,7 @@ class ZcashCli (object):
             amount = self._call_rpc_json('z_getbalance', zaddr)
             balances.add_to(zaddr, amount)
 
-    def _call_rpc(self, *args, **kw):
-        verbose = kw.pop('verbose', False)
-        assert not kw, (args, kw)
-
+    def _call_rpc(self, *args):
         def encode_arg(a):
             if type(a) is str:
                 return a
@@ -125,9 +123,12 @@ class ZcashCli (object):
                 for arg in args
             ]
         )
-        if verbose:
+        if self._verbose:
             print 'Executing: {!r}'.format(args)
-        return subprocess.check_output(args)
+        result = subprocess.check_output(args)
+        if self._verbose:
+            print 'Result:\n{}'.format(result)
+        return result
 
     def _call_rpc_json(self, *args):
         return simplejson.loads(self._call_rpc(*args), use_decimal=True)
