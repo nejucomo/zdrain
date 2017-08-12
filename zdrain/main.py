@@ -69,7 +69,7 @@ class ZcashCli (object):
         self._wait_for_confirmation(txid)
         print 'Confirmed: {}'.format(txid)
 
-    def get_balances(self, taddr):
+    def get_balances(self):
         balances = AccumulatorDict()
         self._get_taddr_balances(balances)
         self._get_zaddr_balances(balances)
