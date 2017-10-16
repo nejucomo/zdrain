@@ -24,8 +24,7 @@ def main(args=sys.argv[1:]):
     cli = ZcashCli(opts.DATADIR, verbose=True)
     balances = cli.get_balances()
 
-    print 'Starting balances: {}'.format(
-        simplejson.dumps(balances, indent=2, sort_keys=True))
+    show_balances('Starting', balances)
 
     for (src, dst) in mapping.iteritems():
         amount = balances[src]
@@ -35,8 +34,7 @@ def main(args=sys.argv[1:]):
         else:
             print 'Balance of {} is 0.'.format(src)
 
-    print 'Ending balances: {}'.format(
-        simplejson.dumps(balances, indent=2, sort_keys=True))
+    show_balances('Ending', balances)
 
 
 def parse_args(args):
@@ -53,6 +51,14 @@ def parse_args(args):
         help='Path to JSON file with {... "sourceaddr": "destaddr" ...}')
 
     return p.parse_args(args)
+
+
+def show_balances(tag, balances):
+    print '{} balances: {}'.format(
+        tag,
+        simplejson.dumps(balances, indent=2, sort_keys=True))
+    print 'Total: {}'.format(
+        reduce(Decimal.__add__, balances.values(), Decimal(0)))
 
 
 class ZcashCli (object):
