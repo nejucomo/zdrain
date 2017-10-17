@@ -93,7 +93,7 @@ class ZcashCli (object):
         while opids:
             time.sleep(13)
             newopids = []
-            for stat in self._call_rpc_json('z_getoperationresults', opids):
+            for stat in self._call_rpc_json('z_getoperationresult', opids):
                 if stat['status'] == 'executing':
                     newopids.append(stat['id'])
                 elif stat['status'] == 'success':
