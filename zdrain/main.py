@@ -3,6 +3,7 @@
 import os
 import sys
 import time
+import pprint
 import argparse
 import subprocess
 import simplejson
@@ -21,20 +22,25 @@ def main(args=sys.argv[1:]):
     with file(opts.MAPJSON) as f:
         mapping = simplejson.load(f, use_decimal=True)
 
-    cli = ZcashCli(opts.DATADIR, verbose=True)
+    cli = ZcashCli(opts.DATADIR, verbose=opts.DEBUG)
     balances = cli.get_balances()
 
     show_balances('Starting', balances)
 
+    opids = []
     for (src, dst) in mapping.iteritems():
         amount = balances[src]
         amount -= FEE
         if amount > Decimal(0):
-            cli.z_sendmany_blocking(src, dst, amount)
+            opids.append(cli.z_sendmany(src, dst, amount))
         else:
             print 'Balance of {} is 0.'.format(src)
 
+    (txids, failures) = cli.wait_for_opids(opids)
+    cli.wait_for_tx_confirmations(txids)
+
     show_balances('Ending', balances)
+    raise SystemExit(0 if len(failures) == 0 else 1)
 
 
 def parse_args(args):
@@ -45,6 +51,13 @@ def parse_args(args):
         dest='DATADIR',
         default=os.path.expanduser('~/.zcash'),
         help='Zcash datadir.')
+
+    p.add_argument(
+        '--debug',
+        dest='DEBUG',
+        default=False,
+        action='store_true',
+        help='Debug all zcash-cli commands.')
 
     p.add_argument(
         'MAPJSON',
@@ -65,6 +78,42 @@ class ZcashCli (object):
     def __init__(self, datadir, verbose):
         self._datadir = datadir
         self._verbose = verbose
+
+    def z_sendmany(self, src, dst, amount):
+        print 'Sending from {} to {}: {} ZEC'.format(src, dst, amount)
+        return self._call_rpc(
+            'z_sendmany',
+            src,
+            [{"address": dst, "amount": amount}]
+        ).strip()
+
+    def wait_for_opids(self, opids):
+        txids = []
+        failures = []
+        while opids:
+            time.sleep(13)
+            newopids = []
+            for stat in self._call_rpc_json('z_getoperationresults', opids):
+                if stat['status'] == 'executing':
+                    newopids.append(stat['id'])
+                elif stat['status'] == 'success':
+                    txids.append(stat['result']['txid'])
+                else:
+                    print 'async operation failure:'
+                    pprint.pprint(stat)
+                    failures.append(stat)
+            opids = newopids
+        return (txids, failures)
+
+    def wait_for_tx_confirmations(self, txids):
+        while txids:
+            time.sleep(163)
+            newtxids = []
+            for txid in txids:
+                txinfo = self._call_rpc_json('gettransaction', txid)
+                if txinfo['confirmations'] < MINCONF:
+                    newtxids.append(txid)
+            txids = newtxids
 
     def z_sendmany_blocking(self, src, dst, amount):
         print 'Sending from {} to {}: {} ZEC'.format(src, dst, amount)
