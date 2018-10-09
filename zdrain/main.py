@@ -93,15 +93,19 @@ class ZcashCli (object):
         while opids:
             time.sleep(13)
             newopids = []
-            for stat in self._call_rpc_json('z_getoperationresult', opids):
-                if stat['status'] == 'executing':
-                    newopids.append(stat['id'])
-                elif stat['status'] == 'success':
-                    txids.append(stat['result']['txid'])
+            print 'Waiting for operations:'
+            for info in self._call_rpc_json('z_getoperationresult', opids):
+                opid = info['id']
+                status = info['status']
+                print '  {}: {}'.format(opid, status)
+                if status in ('executing', 'queued'):
+                    newopids.append(opid)
+                elif status == 'success':
+                    txids.append(info['result']['txid'])
                 else:
                     print 'async operation failure:'
-                    pprint.pprint(stat)
-                    failures.append(stat)
+                    pprint.pprint(info)
+                    failures.append(info)
             opids = newopids
         return (txids, failures)
 
@@ -109,9 +113,12 @@ class ZcashCli (object):
         while txids:
             time.sleep(163)
             newtxids = []
+            print 'Waiting for transactions:'
             for txid in txids:
                 txinfo = self._call_rpc_json('gettransaction', txid)
-                if txinfo['confirmations'] < MINCONF:
+                confs = txinfo['confirmations']
+                print '  {}: {} confirmations'.format(txid, confs)
+                if confs < MINCONF:
                     newtxids.append(txid)
             txids = newtxids
 
